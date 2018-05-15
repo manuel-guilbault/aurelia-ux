@@ -1,7 +1,14 @@
 import { customElement, bindable } from 'aurelia-templating';
+import { DOM } from 'aurelia-pal';
+import { observable } from 'aurelia-binding';
 import { inject } from 'aurelia-dependency-injection';
 import { StyleEngine, UxComponent, PaperRipple, normalizeBooleanAttribute } from '@aurelia-ux/core';
 import { UxButtonTheme } from './ux-button-theme';
+
+export interface UxButtonElement extends HTMLElement {
+  focus(): void;
+  blur(): void;
+}
 
 @inject(Element, StyleEngine)
 @customElement('ux-button')
@@ -14,12 +21,17 @@ export class UxButton implements UxComponent {
 
   @bindable public theme: UxButtonTheme;
 
+  @observable public focused: boolean = false;
+
   private ripple: PaperRipple | null = null;
   private button: HTMLButtonElement;
 
   constructor(
     public element: HTMLElement,
-    private styleEngine: StyleEngine) { }
+    private styleEngine: StyleEngine
+  ) {
+    Object.setPrototypeOf(element, uxButtonElementProto);
+  }
 
   public bind() {
     if (normalizeBooleanAttribute('disabled', this.disabled)) {
@@ -84,6 +96,10 @@ export class UxButton implements UxComponent {
     }
   }
 
+  public focusedChanged(focused: boolean) {
+    this.element.dispatchEvent(DOM.createCustomEvent(focused ? 'focus' : 'blur', { bubbles: false }));
+  }
+
   public onMouseDown(e: MouseEvent) {
     if (this.button.classList.contains('ripple')) {
       if (this.ripple === null) {
@@ -110,3 +126,15 @@ export class UxButton implements UxComponent {
     return true;
   }
 }
+
+const getVm = <T>(_: any) => _.au.controller.viewModel as T;
+const uxButtonElementProto = Object.assign(
+  Object.create(HTMLElement.prototype), {
+    focus() {
+      getVm<UxButton>(this).focused = true;
+    },
+    blur() {
+      getVm<UxButton>(this).focused = false;
+    }
+  }
+);

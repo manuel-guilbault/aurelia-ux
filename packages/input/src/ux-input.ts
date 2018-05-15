@@ -7,6 +7,8 @@ import { UxInputTheme } from './ux-input-theme';
 
 export interface UxInputElement extends HTMLElement {
   value: any;
+  focus(): void;
+  blur(): void;
 }
 
 @inject(Element, StyleEngine)
@@ -170,13 +172,22 @@ function stopEvent(e: Event) {
 }
 
 const getVm = <T>(_: any) => _.au.controller.viewModel as T;
-const uxInputElementProto = Object.create(HTMLElement.prototype, {
-  value: {
-    get() {
-      return getVm<UxInput>(this).getValue();
+const uxInputElementProto = Object.assign(
+  Object.create(HTMLElement.prototype, {
+    value: {
+      get() {
+        return getVm<UxInput>(this).getValue();
+      },
+      set(value: any) {
+        getVm<UxInput>(this).setValue(value);
+      }
+    }
+  }), {
+    focus() {
+      getVm<UxInput>(this).focused = true;
     },
-    set(value: any) {
-      getVm<UxInput>(this).setValue(value);
+    blur() {
+      getVm<UxInput>(this).focused = false;
     }
   }
-});
+);

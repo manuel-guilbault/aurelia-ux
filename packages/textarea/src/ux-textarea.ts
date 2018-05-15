@@ -7,6 +7,8 @@ import { observable } from 'aurelia-framework';
 
 export interface UxTextAreaElement extends HTMLElement {
   value: string;
+  focus(): void;
+  blur(): void;
 }
 
 @inject(Element, StyleEngine)
@@ -20,7 +22,6 @@ export class UxTextArea implements UxComponent {
   @bindable public autoResize: boolean | string = false;
   @bindable public cols: number;
   @bindable public disabled: boolean | string = false;
-  @bindable public focus: boolean | string = false;
   @bindable public maxlength: number;
   @bindable public minlength: number;
   @bindable public readonly: boolean | string = false;
@@ -29,6 +30,9 @@ export class UxTextArea implements UxComponent {
 
   @observable({ initializer: () => '' })
   public rawValue: string;
+
+  @observable()
+  public focused: boolean = false;
 
   public value: any = undefined;
 
@@ -48,7 +52,7 @@ export class UxTextArea implements UxComponent {
     }
 
     if (this.autofocus || this.autofocus === '') {
-      this.focus = true;
+      this.focused = true;
     }
 
     if (element.hasAttribute('placeholder')) {
@@ -138,9 +142,8 @@ export class UxTextArea implements UxComponent {
     }
   }
 
-  public focusChanged(focus: boolean | string) {
-    focus = focus || focus === '' ? true : false;
-    this.element.dispatchEvent(DOM.createCustomEvent(focus ? 'focus' : 'blur', { bubbles: true }));
+  public focusedChanged(focused: boolean) {
+    this.element.dispatchEvent(DOM.createCustomEvent(focused ? 'focus' : 'blur', { bubbles: true }));
   }
 }
 
@@ -150,14 +153,22 @@ function stopEvent(e: Event) {
 
 
 const getVm = <T>(_: any) => _.au.controller.viewModel as T;
-const uxTextAreaElementProto = Object.create(HTMLElement.prototype, {
-  value: {
-    get() {
-      return getVm<UxTextArea>(this).getValue();
+const uxTextAreaElementProto = Object.assign(
+  Object.create(HTMLElement.prototype, {
+    value: {
+      get() {
+        return getVm<UxTextArea>(this).getValue();
+      },
+      set(value: any) {
+        getVm<UxTextArea>(this).setValue(value);
+      }
+    }
+  }), {
+    focus() {
+      getVm<UxTextArea>(this).focused = true;
     },
-    set(value: any) {
-      getVm<UxTextArea>(this).setValue(value);
+    blur() {
+      getVm<UxTextArea>(this).focused = false;
     }
   }
-});
-
+);

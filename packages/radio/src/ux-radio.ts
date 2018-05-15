@@ -13,6 +13,8 @@ import { ElementEvents, DOM } from 'aurelia-framework';
 export interface UxRadioElement extends HTMLElement {
   type: 'radio';
   checked: boolean;
+  focus(): void;
+  blur(): void;
 }
 
 @inject(Element, StyleEngine)
@@ -29,6 +31,9 @@ export class UxRadio implements UxComponent {
 
   @observable({ initializer: () => false })
   public value: boolean;
+
+  @observable()
+  public focused = false;
 
   private radio: HTMLInputElement;
   private ripple: PaperRipple | null = null;
@@ -118,6 +123,10 @@ export class UxRadio implements UxComponent {
     this.setChecked(value);
   }
 
+  public focusedChanged(focused: boolean) {
+    this.element.dispatchEvent(DOM.createCustomEvent(focused ? 'focus' : 'blur', { bubbles: false }));
+  }
+
   public onMouseDown(e: MouseEvent) {
     if (e.button !== 0 || this.isDisabled) {
       return;
@@ -156,16 +165,25 @@ function stopEvent(e: Event) {
 
 
 const getVm = <T>(_: any) => _.au.controller.viewModel as T;
-const uxRadioElementProto = Object.create(HTMLElement.prototype, {
-  type: {
-    value: 'radio',
-  },
-  checked: {
-    get() {
-      return getVm<UxRadio>(this).getChecked();
+const uxRadioElementProto = Object.assign(
+  Object.create(HTMLElement.prototype, {
+    type: {
+      value: 'radio',
     },
-    set(value: boolean) {
-      getVm<UxRadio>(this).setChecked(value);
+    checked: {
+      get() {
+        return getVm<UxRadio>(this).getChecked();
+      },
+      set(value: boolean) {
+        getVm<UxRadio>(this).setChecked(value);
+      }
+    }
+  }), {
+    focus() {
+      getVm<UxRadio>(this).focused = true;
+    },
+    blur() {
+      getVm<UxRadio>(this).focused = false;
     }
   }
-});
+);

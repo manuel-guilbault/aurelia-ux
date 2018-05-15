@@ -1,13 +1,17 @@
 import { customElement, bindable } from 'aurelia-templating';
 import { DOM } from 'aurelia-pal';
-import { bindingMode } from 'aurelia-binding';
+import { bindingMode, observable } from 'aurelia-binding';
 import { inject } from 'aurelia-dependency-injection';
 import { StyleEngine, UxComponent, normalizeBooleanAttribute } from '@aurelia-ux/core';
 import { UxChipInputTheme } from './ux-chip-input-theme';
 
+export interface UxChipInputElement extends HTMLElement {
+  focus(): void;
+  blur(): void;
+}
+
 @inject(Element, StyleEngine)
 @customElement('ux-chip-input')
-
 export class UxChipInput implements UxComponent {
   @bindable public disabled: boolean | string = false;
   @bindable public readonly: boolean | string = false;
@@ -21,11 +25,16 @@ export class UxChipInput implements UxComponent {
   @bindable({ defaultBindingMode: bindingMode.twoWay })
   public chips: string[] = new Array<string>();
 
+  @observable()
+  public focused: boolean = false;
+
   private textbox: HTMLInputElement;
   private chiprepeat: Element;
   private tagrepeat: Element;
 
-  constructor(private element: HTMLElement, private styleEngine: StyleEngine) { }
+  constructor(private element: HTMLElement, private styleEngine: StyleEngine) {
+    Object.setPrototypeOf(element, uxChipInputElementProto);
+  }
 
   public bind() {
     this.themeChanged(this.theme);
@@ -180,4 +189,20 @@ export class UxChipInput implements UxComponent {
 
     this.styleEngine.applyTheme(newValue, this.element);
   }
+
+  public focusedChanged(focused: boolean) {
+    this.element.dispatchEvent(DOM.createCustomEvent(focused ? 'focus' : 'blur', { bubbles: false }));
+  }
 }
+
+const getVm = <T>(_: any) => _.au.controller.viewModel as T;
+const uxChipInputElementProto = Object.assign(
+  Object.create(HTMLElement.prototype), {
+    focus() {
+      getVm<UxChipInput>(this).focused = true;
+    },
+    blur() {
+      getVm<UxChipInput>(this).focused = false;
+    }
+  }
+);

@@ -8,6 +8,8 @@ import { DOM, ElementEvents } from 'aurelia-framework';
 export interface UxSwitchElement extends HTMLElement {
   type: 'checkbox';
   checked: boolean;
+  focus(): void;
+  blur(): void;
 }
 
 @inject(Element, StyleEngine)
@@ -24,6 +26,9 @@ export class UxSwitch implements UxComponent {
 
   @observable({ initializer: () => false })
   public value: boolean;
+
+  @observable()
+  public focused = false;
 
   private checkbox: HTMLInputElement;
   private ripple: PaperRipple | null = null;
@@ -117,6 +122,10 @@ export class UxSwitch implements UxComponent {
     }
   }
 
+  public focusedChanged(focused: boolean) {
+    this.element.dispatchEvent(DOM.createCustomEvent(focused ? 'focus' : 'blur', { bubbles: false }));
+  }
+
   public onMouseDown(e: MouseEvent) {
     if (e.button !== 0 || this.isDisabled) {
       return;
@@ -154,16 +163,25 @@ function stopEvent(e: Event) {
 }
 
 const getVm = <T>(_: any) => _.au.controller.viewModel as T;
-const uxSwitchElementProto = Object.create(HTMLElement.prototype, {
-  type: {
-    value: 'checkbox',
-  },
-  checked: {
-    get() {
-      return getVm<UxSwitch>(this).getChecked();
+const uxSwitchElementProto = Object.assign(
+  Object.create(HTMLElement.prototype, {
+    type: {
+      value: 'checkbox',
     },
-    set(value: boolean) {
-      getVm<UxSwitch>(this).setChecked(value);
+    checked: {
+      get() {
+        return getVm<UxSwitch>(this).getChecked();
+      },
+      set(value: boolean) {
+        getVm<UxSwitch>(this).setChecked(value);
+      }
+    }
+  }), {
+    focus() {
+      getVm<UxSwitch>(this).focused = true;
+    },
+    blur() {
+      getVm<UxSwitch>(this).focused = false;
     }
   }
-});
+);

@@ -15,6 +15,8 @@ import { DOM } from 'aurelia-pal';
 export interface UxCheckboxElement extends HTMLElement {
   type: 'checkbox';
   checked: boolean;
+  focus(): void;
+  blur(): void;
 }
 
 @inject(Element, StyleEngine)
@@ -31,6 +33,9 @@ export class UxCheckbox implements UxComponent {
 
   @observable()
   public value: boolean;
+
+  @observable()
+  public focused: boolean = false;
 
   private indeterminate: boolean;
 
@@ -128,6 +133,10 @@ export class UxCheckbox implements UxComponent {
     this.setChecked(newValue);
   }
 
+  public focusedChanged(focused: boolean) {
+    this.element.dispatchEvent(DOM.createCustomEvent(focused ? 'focus' : 'blur', { bubbles: false }));
+  }
+
   public onMouseDown(e: MouseEvent) {
     if (e.button !== 0 || this.isDisabled) {
       return;
@@ -165,24 +174,33 @@ function stopEvent(e: Event) {
 }
 
 const getVm = <T>(_: any) => _.au.controller.viewModel as T;
-const uxCheckboxElementProto = Object.create(HTMLElement.prototype, {
-  type: {
-    value: 'checkbox',
-  },
-  checked: {
-    get() {
-      return getVm<UxCheckbox>(this).getChecked();
+const uxCheckboxElementProto = Object.assign(
+  Object.create(HTMLElement.prototype, {
+    type: {
+      value: 'checkbox',
     },
-    set(value: boolean) {
-      getVm<UxCheckbox>(this).setChecked(value);
+    checked: {
+      get() {
+        return getVm<UxCheckbox>(this).getChecked();
+      },
+      set(value: boolean) {
+        getVm<UxCheckbox>(this).setChecked(value);
+      }
+    },
+    indeterminate: {
+      get() {
+        return getVm<UxCheckbox>(this).getIndeterminate();
+      },
+      set(value: boolean) {
+        getVm<UxCheckbox>(this).setIndeterminate(value);
+      }
     }
-  },
-  indeterminate: {
-    get() {
-      return getVm<UxCheckbox>(this).getIndeterminate();
+  }), {
+    focus() {
+      getVm<UxCheckbox>(this).focused = true;
     },
-    set(value: boolean) {
-      getVm<UxCheckbox>(this).setIndeterminate(value);
+    blur() {
+      getVm<UxCheckbox>(this).focused = false;
     }
   }
-});
+);

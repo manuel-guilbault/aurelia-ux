@@ -21,6 +21,6 @@
     </ux-tag>
   </template>
 
-  <input ref="textbox" keyup.delegate="handleKeyup($event)"/>
+  <input ref="textbox" focus.bind="focused" keyup.delegate="handleKeyup($event)"/>
   <div class="bottom-border"></div>
 </template>

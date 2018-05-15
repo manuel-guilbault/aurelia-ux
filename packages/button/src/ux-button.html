@@ -3,6 +3,7 @@
   <require from="./ux-button.css"></require>
 
   <button ref="button" class="${disabled ? 'disabled' : ''}"
+    focus.bind="focused"
     mousedown.trigger="onMouseDown($event)"
     mouseup.trigger="onMouseUp()"
     mouseleave.trigger="onMouseUp()">
